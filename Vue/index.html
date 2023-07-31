@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Bootstrap demo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.7.14/dist/vue.js"></script>
+    <script src="https://kit.fontawesome.com/8dfe5139a6.js" crossorigin="anonymous"></script>
+
+    <style>
+        body {
+            padding: 20px;
+        }
+
+        h1 {
+            font-size: 25px;
+            font-weight: bolder;
+        }
+
+        .col_room {
+            padding: 20px;
+        }
+
+        .room_container {
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.3);
+            height: 280px;
+        }
+
+        .col-edit {
+            height: 100vh;
+            overflow-y: scroll;
+        }
+
+        .room_edit {
+            margin-top: 15px;
+        }
+
+        .cover {
+            height: 150px;
+            position: relative;
+            background-size: cover;
+            background-position: center center;
+        }
+
+        h3 {
+            font-weight: bolder;
+            position: absolute;
+            bottom: 10px;
+            font-size: 20px;
+            padding: 5px 15px;
+            background-color: #fff;
+        }
+
+        .info {
+            padding: 10px;
+        }
+
+        .icon {
+            display: inline-block;
+        }
+
+        span {
+            margin-right: 5px;
+            opacity: 0.6
+        }
+
+        h5 {
+            font-size: 12px;
+        }
+
+        .final_price {
+            float: right;
+            color: red;
+        }
+
+        .final_price::after {
+            content: "$";
+        }
+
+        input {
+            margin-bottom: 12px;
+        }
+
+        .cursor_pointer {
+            cursor: pointer;
+        }
+
+        .fa-xmark {
+            font-size: 1.5rem;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: white;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .fa-xmark:hover {
+            font-size: 1.5rem;
+            color: red;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <div class="container">
+            <div class="row">
+                <div class="col-sm-3 col-edit">
+                    <h1>飯店資料</h1>
+                    <hr>
+                    <label>總折數</label>
+                    <input type="text" class="form-control" v-model="discount">
+                    <label for="">服務費</label>
+                    <input type="text" class="form-control" v-model="service_fee">
+                    <h1 style="margin-top: 20px;">房間編輯</h1>
+                    <select class="form-control" v-model="edit_id">
+                        <option v-for="(r,id) in rooms" v-bind:value="id">{{r.name}}</option>
+                    </select>
+                    <hr>
+                    <div class="room_edit" v-for="(room, id) in [rooms[edit_id]]">
+                        <h4>{{ room.name }}</h4>
+                        <label>房間名稱 
+                            <i class="fa-solid fa-trash cursor_pointer" @click="delete_room(edit_id)"></i>
+                        </label>
+                        <input type="text" class="form-control" v-model="room.name">
+                        <label>價格</label>
+                        <input type="text" class="form-control" v-model="room.price">
+                        <label>總折數</label>
+                        <input type="text" class="form-control" v-model="discount">
+                        <label>服務費</label>
+                        <input type="text" class="form-control" v-model="service_fee">
+                        <label>英文名稱</label>
+                        <input type="text" class="form-control" v-model="room.eng">
+                        <label>圖片網址</label>
+                        <input type="text" class="form-control" v-model="room.cover">
+                        <label>房間設備</label>
+                        <label>早餐</label>
+                        <input type="checkbox" class="form-check-input" v-model="room.equipment.breakfast">
+                        <label>浴缸</label>
+                        <input type="checkbox" class="form-check-input" v-model="room.equipment.bathtub">
+                        <label>wifi</label>
+                        <input type="checkbox" class="form-check-input" v-model="room.equipment.wifi">
+                    </div>
+                    <div class="room_edit" @click="addroom">
+                        + 新增房間
+                    </div>
+                </div>
+                <div class="col-sm-9">
+                    <h1>房間列表</h1>
+                    <hr>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="row">
+                                <div class="col-sm-4 col_room" v-for="(myroom, id) in rooms">
+                                    <room :room_data="myroom" :id="id" :hotel_discount="discount"
+                                        :hotel_fee="service_fee" :delete_room="delete_room">
+                                    </room>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <template id="room">
+        <div class="room_container">
+            <div class="cover" v-bind:style="bg_css">
+                <h3>{{room_data.name}}</h3>
+                <i class="fa-solid fa-xmark" @click="delete_room(id)"></i>
+            </div>
+            <div class="info">
+                <h5>{{room_data.eng}}</h5>
+                <div class="icon">
+                    <span v-if="room_data.equipment.breakfast"><i class="fa-solid fa-mug-saucer"></i></span>
+                    <span v-if="room_data.equipment.bathtub"><i class="fa-solid fa-bath"></i></span>
+                    <span v-if="room_data.equipment.wifi"><i class="fa-solid fa-wifi"></i></span>
+                </div>
+                <h5>{{room_data.discount}}*{{hotel_discount}} = {{final_discount_show}}折</h5>
+                <h4>TWD
+                    <del> {{room_data.price}}</del>
+                    <div class="final_price">{{final_price}}</div>
+                </h4>
+            </div>
+        </div>
+    </template>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm"
+        crossorigin="anonymous"></script>
+    <script>
+        // JavaScript
+        var rooms = [
+            {
+                "name": "經濟雙人房",
+                "eng": "Economy Double Room",
+                "price": 7000,
+                "amount": 0,
+                "cover": "http://bosscode.monoame.com/20170323_vue_comp/img/room%20(1).jpg",
+                "discount": 0.9,
+                "equipment": {
+                    "wifi": false,
+                    "bathtub": true,
+                    "breakfast": true
+                }
+            },
+            {
+                "name": "海景三人房",
+                "eng": "Sea view triple Room",
+                "price": 7800,
+                "amount": 0,
+                "cover": "http://bosscode.monoame.com/20170323_vue_comp/img/room%20(2).jpg",
+                "discount": 0.8,
+                "equipment": {
+                    "wifi": true,
+                    "bathtub": true,
+                    "breakfast": false
+                }
+            },
+            {
+                "name": "典雅景觀房",
+                "eng": "Elegant landscape Room",
+                "price": 5400,
+                "amount": 0,
+                "cover": "http://bosscode.monoame.com/20170323_vue_comp/img/room%20(3).jpg",
+                "discount": 0.85,
+                "equipment": {
+                    "wifi": false,
+                    "bathtub": true,
+                    "breakfast": true
+                }
+            },
+            {
+                "name": "尊享豪華房",
+                "eng": "Exclusive Deluxe Room",
+                "price": 9800,
+                "amount": 0,
+                "cover": "http://bosscode.monoame.com/20170323_vue_comp/img/room%20(4).jpg",
+                "discount": 0.8,
+                "equipment": {
+                    "wifi": true,
+                    "bathtub": false,
+                    "breakfast": true
+                }
+            },
+            {
+                "name": "商務雙人房",
+                "eng": "Business Double Room",
+                "price": 5600,
+                "amount": 0,
+                "cover": "http://bosscode.monoame.com/20170323_vue_comp/img/room (5).jpg",
+                "discount": 0.9,
+                "equipment": {
+                    "wifi": true,
+                    "bathtub": false,
+                    "breakfast": false
+                }
+            },
+            {
+                "name": "溫泉雙人房",
+                "eng": "Hot spring double Room",
+                "price": 8400,
+                "amount": 0,
+                "cover": "http://bosscode.monoame.com/20170323_vue_comp/img/room (6).jpg",
+                "discount": 0.6,
+                "equipment": {
+                    "wifi": true,
+                    "bathtub": true,
+                    "breakfast": true
+                }
+            },
+            {
+                "name": "總統套房",
+                "eng": "Presidential Suite",
+                "price": 23000,
+                "amount": 0,
+                "cover": "http://bosscode.monoame.com/20170323_vue_comp/img/room (7).jpg",
+                "discount": 0.75,
+                "equipment": {
+                    "wifi": true,
+                    "bathtub": true,
+                    "breakfast": true
+                }
+            },
+            {
+                "name": "奢華四人房",
+                "eng": "Luxury four Room",
+                "price": 8500,
+                "amount": 0,
+                "cover": "http://bosscode.monoame.com/20170323_vue_comp/img/room (8).jpg",
+                "discount": 0.7,
+                "equipment": {
+                    "wifi": true,
+                    "bathtub": true,
+                    "breakfast": false
+                }
+            }
+        ];
+        Vue.component(
+            "room", {
+            template: "#room",
+            props: ["room_data", "hotel_discount", "hotel_fee", "delete_room", "id"],
+            computed: {
+                final_discount: function () {
+                    return this.room_data.discount * this.hotel_discount;
+                },
+                final_discount_show: function () {
+                    return parseInt(this.final_discount * 100);
+                },
+                final_price() {
+                    return parseInt(this.room_data.price * this.final_discount) + this.hotel_fee * 1.0;
+                },
+                bg_css: function () {
+                    return { "background-image": "url('" + this.room_data.cover + "')" };
+                }
+            }
+        });
+        var vm = new Vue({
+            el: "#app",
+            data: {
+                rooms: rooms,
+                discount: 0.9,
+                service_fee: 200,
+                edit_id:0
+            },
+            methods: {
+                addroom: function () {
+                    this.rooms.push({
+                        name: "新房間",
+                        eng: "new Room",
+                        price: 0,
+                        amount: 0,
+                        cover: "",
+                        discount: 0,
+                        equipment: {
+                            wifi: true,
+                            bathtub: true,
+                            breakfast: false
+                        }
+                    });
+                    this.edit_id = this.rooms.length - 1
+                },
+                delete_room: function (id) {
+                    this.rooms.splice(id, 1);
+                }
+            }
+        });
+
+    </script>
+</body>
+
+</html>
